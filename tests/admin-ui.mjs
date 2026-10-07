@@ -70,7 +70,7 @@ assert.equal(
 );
 await page.keyboard.press("Escape");
 const fixture =
-  "מספר סידורי,דגם,חברה,עובד,לקוח,מצב,צד,תאריך קליטה,רמת הגברה\nIMP-QA-1,Imported Model,אודיוטק,,,במחסן,ימין,05/10/2026,55\nIMP-QA-2,Imported Model,פטיפון מכשירי שמיעה,ירון גברי,לקוח דוגמה,נמסר ללקוח,שמאל,,65";
+  "מספר סידורי,דגם,חברה,עובד,לקוח,מצב,צד,תאריך קליטה,רמת הגברה\nIMP-QA-1,Imported Model,חברה לדוגמה 1,,,במחסן,ימין,05/10/2026,55\nIMP-QA-2,Imported Model,חברה לדוגמה 2 מכשירי שמיעה,עובד לדוגמה 1,לקוח דוגמה,נמסר ללקוח,שמאל,,65";
 fs.writeFileSync("work/sample.csv", fixture);
 await page
   .locator("nav")
@@ -102,7 +102,7 @@ assert.equal(
   await page
     .getByRole("dialog")
     .locator(".detail-grid")
-    .getByText("ירון גברי", { exact: true })
+    .getByText("עובד לדוגמה 1", { exact: true })
     .count(),
   1,
 );

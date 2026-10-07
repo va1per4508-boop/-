@@ -1,6 +1,6 @@
 # מלאי — Rexton hearing aid inventory
 
-Hebrew RTL inventory workspace for Audiotech, Patiphone Hearing Aids and Audio Sound Hearing Aids, with shared field staff: Yaron Gavri, Uriel Cohen, Chen Rosenberg and Zeev.
+Hebrew RTL hearing-aid inventory workspace for multiple companies and shared field staff. Public source and test fixtures use generic names; actual identities and customer records belong in the protected database.
 
 ## Run
 
@@ -23,7 +23,7 @@ Dashboard with computed stock counts; serial-level device cards; multi-device re
 
 The server authoritatively validates transitions and permissions. RPCs use row locks and expected versions to prevent concurrent overwrites. Shipment receipt is atomic and serials are unique regardless of case. Browser demo validates the same state transitions but has no authentication.
 
-Models in the demo are examples, not a verified supplier catalogue; reception allows typing the actual model. There is no accounting, invoicing, barcode camera capture, automated notification sending, or medical record storage. Trial alerts and repair queues are visible in the app.
+Models in the demo are examples, not a verified supplier catalogue; reception allows typing the actual model. There is no accounting, invoicing, automated notification sending, or medical record storage. Trial alerts and repair queues are visible in the app.
 
 ## Verification
 
@@ -39,7 +39,7 @@ Barcode scanning supports a mobile camera using ZXing (Code 128, EAN and other s
 
 The import screen accepts XLSX with multiple worksheet tabs or CSV. The administrator selects a worksheet/header row, maps known fields, chooses explicit defaults, previews assignments and confirms any new catalogue values. Unmapped columns become custom fields; the original source row is retained. Missing reception dates stay blank. Duplicate serials, contradictory assignments, invalid dates and unresolved statuses block import. Each confirmed import is atomic and limited to 1,000 devices. Repeated worksheets must be imported separately with the appropriate defaults. Demo imports require an acknowledgement that the file contains only sample data.
 
-The user's private Google Sheets source was not readable through the provided link (Google returned HTTP 401), and no authenticated Drive tool was available. No source data or inferred assignments were imported. Once access is granted, map and reconcile the source counts before writing to a configured, authenticated shared backend. Never embed real inventory or customer records into deployment source or this public repository.
+The user's private Google Sheets source was not readable through the provided link (Google returned HTTP 401), and no authenticated Drive tool was available. An uploaded workbook was subsequently mapped and reconciled privately before import into the connected database. Never embed real inventory or customer records into deployment source or this public repository.
 
 Additional checks: `npm run test:admin` exercises management, custom fields, barcode lookup/reception and sample CSV imports; `npm run test:import` checks multi-sheet XLSX parsing, leading-zero serials, Hebrew headers, original data retention and date validation. The Code128 camera path was tested through a virtual camera containing a genuine generated barcode; real-device camera permissions and scanning conditions should be checked on the employee phones.
 
@@ -49,4 +49,7 @@ Apply `database/003-legacy-records.sql` after the first two migrations. The appl
 
 Historical rows have administrator-only writes and employee-scoped reads after explicit assignment. Catalogue renames cascade to historical rows with audit records. Test with `npm run test:legacy` and `npm run test:legacy-ui`.
 
-The uploaded real workbook was parsed and validated in a private local workspace. It is intentionally excluded from this public repository and from deployment source. The live site still has no shared database connection, so the real records have not been written to the deployed application.
+The uploaded real workbook was parsed and validated in a private local workspace. It is intentionally excluded from this public repository and from deployment source. Production uses the connected Supabase database; actual records were imported independently of deployment source.
+
+
+Production provisioning: Vite accepts the public Supabase URL and publishable key injected by the Marketplace integration. Only these two public values are exposed to the browser; service-role and database credentials remain server-side. Recovery links support a one-time token hash and a password setup screen. The real workbook was imported into the connected database separately from public source files. Employee logins require individual email addresses.

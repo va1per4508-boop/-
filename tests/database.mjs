@@ -14,7 +14,7 @@ const admin = "11111111-1111-4111-8111-111111111111",
   device = "44444444-4444-4444-8444-444444444444";
 await db.query("insert into auth.users values ($1),($2),($3)", [admin, a, b]);
 await db.query(
-  `insert into public.profiles(id,name,role,employee) values ($1,'מנהל','admin',null),($2,'ירון גברי','agent','ירון גברי'),($3,'אוריאל כהן','agent','אוריאל כהן')`,
+  `insert into public.profiles(id,name,role,employee) values ($1,'מנהל','admin',null),($2,'עובד לדוגמה 1','agent','עובד לדוגמה 1'),($3,'עובד לדוגמה 2','agent','עובד לדוגמה 2')`,
   [admin, a, b],
 );
 await db.exec("set role authenticated");
@@ -36,7 +36,7 @@ const item = {
   model: "Reach R-Li",
   side: "ימין",
   color: "כסף",
-  company: "אודיוטק",
+  company: "חברה לדוגמה 1",
   batch: "TEST",
   received: "2026-10-07",
 };
@@ -58,7 +58,7 @@ await db.query("select move_device($1,$2,$3,$4)", [
   device,
   1,
   "assign",
-  JSON.stringify({ company: "אודיוטק", employee: "ירון גברי" }),
+  JSON.stringify({ company: "חברה לדוגמה 1", employee: "עובד לדוגמה 1" }),
 ]);
 await as(b);
 assert.equal((await db.query("select * from devices")).rows.length, 0);
@@ -85,7 +85,7 @@ await fail(
       device,
       2,
       "reassign",
-      JSON.stringify({ employee: "אוריאל כהן", company: "אודיוטק" }),
+      JSON.stringify({ employee: "עובד לדוגמה 2", company: "חברה לדוגמה 1" }),
     ]),
   /אין הרשאה/,
 );
@@ -220,21 +220,21 @@ await db.query("select move_device($1,$2,$3,$4)", [
   device,
   d.version,
   "assign",
-  JSON.stringify({ company: "אודיוטק", employee: "ירון גברי" }),
+  JSON.stringify({ company: "חברה לדוגמה 1", employee: "עובד לדוגמה 1" }),
 ]);
 cfg = (await db.query("select * from catalog")).rows[0];
-old = cfg.data.employees.find((x) => x.name === "ירון גברי");
+old = cfg.data.employees.find((x) => x.name === "עובד לדוגמה 1");
 await db.query("select manage_catalog($1,$2,$3,$4)", [
   "employees",
   "edit",
-  JSON.stringify({ ...old, name: "ירון גברי החדש" }),
+  JSON.stringify({ ...old, name: "עובד לדוגמה 1 החדש" }),
   cfg.version,
 ]);
 await as(a);
 assert.equal((await db.query("select * from devices")).rows.length, 1);
 assert.equal(
   (await db.query("select * from profiles where id=$1", [a])).rows[0].employee,
-  "ירון גברי החדש",
+  "עובד לדוגמה 1 החדש",
 );
 await as(admin);
 cfg = (await db.query("select * from catalog")).rows[0];
@@ -246,7 +246,7 @@ const imported = {
   serial: "IMP-001",
   model: "דגם מיובא",
   status: "warehouse",
-  company: "אודיוטק",
+  company: "חברה לדוגמה 1",
   employee: "",
   client: "",
   received: "",
@@ -297,7 +297,7 @@ const legacyRow = {
   sourceKey: "legacy:sample:2",
   kind: "device-order",
   model: "LEGACY MODEL",
-  company: "אודיוטק",
+  company: "חברה לדוגמה 1",
   employee: "",
   client: "לקוח דוגמה",
   quantity: 2,
@@ -343,7 +343,7 @@ await db.query("select edit_legacy_record($1,$2,$3,$4)", [
   legacyRow.id,
   1,
   JSON.stringify({
-    employee: "אוריאל כהן",
+    employee: "עובד לדוגמה 2",
     sourceKey: "forged",
     source: { bad: true },
   }),

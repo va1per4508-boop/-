@@ -106,7 +106,8 @@ function App() {
     [toast, setToast] = useState(""),
     [busy, setBusy] = useState(false),
     [mobile, setMobile] = useState(false),
-    [scanner, setScanner] = useState(null);
+    [scanner, setScanner] = useState(null),
+    [passwordDone, setPasswordDone] = useState(false);
   useEffect(() => {
     if (!backend) {
       try {
@@ -117,10 +118,21 @@ function App() {
       }
       return;
     }
-    backend.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setAuthReady(true);
-    });
+    const link = new URLSearchParams(location.search);
+    const tokenHash = link.get("token_hash");
+    if (tokenHash && link.get("type") === "recovery") {
+      history.replaceState(null, "", location.pathname + "?setup=password");
+      backend.auth.verifyOtp({ token_hash: tokenHash, type: "recovery" }).then(({ data, error }) => {
+        setSession(data.session);
+        if (error) setError("קישור הכניסה פג תוקף או כבר נוצל. בקשו קישור חדש.");
+        setAuthReady(true);
+      });
+    } else {
+      backend.auth.getSession().then(({ data }) => {
+        setSession(data.session);
+        setAuthReady(true);
+      });
+    }
     const {
       data: { subscription },
     } = backend.auth.onAuthStateChange((_, s) => {
@@ -214,6 +226,7 @@ function App() {
   }
   if (!authReady) return <div className="loading">טוען…</div>;
   if (backend && !session) return <Login onError={setError} error={error} />;
+  if (backend && session && new URLSearchParams(location.search).get("setup") === "password" && !passwordDone) return <SetPassword onDone={() => { history.replaceState(null,"",location.pathname);setPasswordDone(true); }} />;
   if (!data)
     return (
       <div className="loading">
@@ -2038,5 +2051,10 @@ function Login({ error, onError }) {
       </div>
     </div>
   );
+}
+function SetPassword({onDone}) {
+ const [password,setPassword]=useState(""),[confirmation,setConfirmation]=useState(""),[busy,setBusy]=useState(false),[error,setError]=useState("");
+ async function save(e){e.preventDefault();if(password!==confirmation){setError("הסיסמאות אינן זהות");return;}setBusy(true);const r=await backend.auth.updateUser({password});setBusy(false);if(r.error)setError("לא ניתן לשמור את הסיסמה. נסו שוב או בקשו קישור חדש.");else onDone();}
+ return <div className="login"><div className="panel"><h1>הגדרת סיסמה</h1><p>בחרו סיסמה אישית לכניסה למערכת.</p><form onSubmit={save}><Field label="סיסמה חדשה"><input dir="ltr" type="password" minLength={10} required autoComplete="new-password" value={password} onChange={e=>setPassword(e.target.value)}/></Field><Field label="אימות סיסמה"><input dir="ltr" type="password" minLength={10} required autoComplete="new-password" value={confirmation} onChange={e=>setConfirmation(e.target.value)}/></Field>{error&&<div role="alert" className="error">{error}</div>}<button className="primary full" disabled={busy}>{busy?"שומר…":"שמירת סיסמה וכניסה"}</button></form></div></div>;
 }
 createRoot(document.getElementById("root")).render(<App />);

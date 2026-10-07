@@ -4,7 +4,7 @@ create table public.profiles (
  id uuid primary key references auth.users(id) on delete cascade,
  name text not null,
  role text not null check (role in ('admin','agent')),
- employee text check (employee in ('ירון גברי','אוריאל כהן','חן רוזנברג','זאב')),
+ employee text check (employee in ('עובד לדוגמה 1','עובד לדוגמה 2','עובד לדוגמה 3','עובד לדוגמה 4')),
  check (role='admin' or employee is not null)
 );
 create table public.devices (
@@ -46,7 +46,7 @@ begin
  select name into actor from public.profiles where id=auth.uid();
  for item in select value from jsonb_array_elements(items) loop
   if nullif(trim(item->>'serial'),'') is null or length(item->>'serial')>100 or nullif(trim(item->>'model'),'') is null or nullif(trim(item->>'batch'),'') is null then raise exception 'חסרים פרטי קליטה'; end if;
-  if coalesce(item->>'company','') not in ('','אודיוטק','פטיפון מכשירי שמיעה','אודיו סאונד מכשירי שמיעה') then raise exception 'חברה לא תקינה'; end if;
+  if coalesce(item->>'company','') not in ('','חברה לדוגמה 1','חברה לדוגמה 2 מכשירי שמיעה','חברה לדוגמה 3 מכשירי שמיעה') then raise exception 'חברה לא תקינה'; end if;
   if coalesce(item->>'side','') not in ('ימין','שמאל','לא מוגדר') then raise exception 'צד לא תקין'; end if;
   if item->>'received' is null then raise exception 'חסר תאריך קליטה'; end if;
   perform (item->>'received')::date;
@@ -77,7 +77,7 @@ begin
   (s='repair' and action in ('return','supplier'))
  ) then raise exception 'הפעולה אינה אפשרית במצב הנוכחי'; end if;
  if action in ('assign','reassign') then
-  if coalesce(action_values->>'company','') not in ('אודיוטק','פטיפון מכשירי שמיעה','אודיו סאונד מכשירי שמיעה') or coalesce(action_values->>'employee','') not in ('ירון גברי','אוריאל כהן','חן רוזנברג','זאב') then raise exception 'יש לבחור חברה ועובד'; end if;
+  if coalesce(action_values->>'company','') not in ('חברה לדוגמה 1','חברה לדוגמה 2 מכשירי שמיעה','חברה לדוגמה 3 מכשירי שמיעה') or coalesce(action_values->>'employee','') not in ('עובד לדוגמה 1','עובד לדוגמה 2','עובד לדוגמה 3','עובד לדוגמה 4') then raise exception 'יש לבחור חברה ועובד'; end if;
   next_data:=next_data||jsonb_build_object('status','agent','company',action_values->>'company','employee',action_values->>'employee','client','','trialUntil','');
  elsif action in ('deliver','trial') then
   if nullif(trim(action_values->>'client'),'') is null or length(action_values->>'client')>100 then raise exception 'יש להזין שם לקוח'; end if;
@@ -107,5 +107,5 @@ commit;
 -- Create users in Supabase Authentication (disable public sign-ups).
 -- Then insert profiles using their Authentication user IDs:
 -- insert into public.profiles(id,name,role,employee) values ('USER_UUID','מנהל מערכת','admin',null);
--- insert into public.profiles(id,name,role,employee) values ('USER_UUID','ירון גברי','agent','ירון גברי');
--- Repeat for אוריאל כהן, חן רוזנברג, זאב. Do not expose service-role keys in the frontend.
+-- insert into public.profiles(id,name,role,employee) values ('USER_UUID','עובד לדוגמה 1','agent','עובד לדוגמה 1');
+-- Repeat for עובד לדוגמה 2, עובד לדוגמה 3, עובד לדוגמה 4. Do not expose service-role keys in the frontend.

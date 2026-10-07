@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { parseLegacy, isLegacyWorkbook } from "../src/legacy.js";
 const companies = [
-  "אודיוטק",
-  "פטיפון מכשירי שמיעה",
-  "אודיו סאונד מכשירי שמיעה",
+  "חברה לדוגמה 1",
+  "חברה לדוגמה 2 מכשירי שמיעה",
+  "חברה לדוגמה 3 מכשירי שמיעה",
 ];
 const headers = [
   "צבע מכשיר",
@@ -19,7 +19,7 @@ const headers = [
 ];
 const book = [
   {
-    name: "אודיו סאונד רקסטון",
+    name: "חברה לדוגמה 3 רקסטון",
     rows: [
       headers,
       [
@@ -43,7 +43,7 @@ assert(isLegacyWorkbook(book));
 const blocked = parseLegacy(book, companies);
 assert.equal(blocked.issues.filter((i) => i.blocking).length, 1);
 const corrected = parseLegacy(book, companies, [], "order", {
-  "אודיו סאונד רקסטון:2": "2026-06-30",
+  "חברה לדוגמה 3 רקסטון:2": "2026-06-30",
 });
 assert.equal(corrected.records.length, 2);
 assert.equal(corrected.summaries[0].units, 2);
@@ -55,7 +55,7 @@ assert.equal(corrected.records[0].serials.length, 0);
 assert.equal(corrected.records[1].kind, "other");
 assert.equal(
   parseLegacy(book, companies, corrected.records, "order", {
-    "אודיו סאונד רקסטון:2": "2026-06-30",
+    "חברה לדוגמה 3 רקסטון:2": "2026-06-30",
   }).records.length,
   0,
 );

@@ -21,8 +21,8 @@ await page
   .getByRole("button", { name: "פתיחת מכשיר QA-100", exact: true })
   .click();
 await page.getByRole("button", { name: "העברה לעובד", exact: true }).click();
-await page.getByLabel("חברה *", { exact: true }).selectOption("אודיוטק");
-await page.getByLabel("עובד אחראי *").selectOption("ירון גברי");
+await page.getByLabel("חברה *", { exact: true }).selectOption("חברה לדוגמה 1");
+await page.getByLabel("עובד אחראי *").selectOption("עובד לדוגמה 1");
 await page.getByRole("button", { name: "אישור ושמירה" }).click();
 await page.getByRole("dialog").waitFor({ state: "hidden" });
 await page

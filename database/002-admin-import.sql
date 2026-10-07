@@ -6,8 +6,8 @@ create policy readable_catalog on public.catalog for select to authenticated usi
 revoke all on public.catalog from anon,authenticated;
 grant select on public.catalog to authenticated;
 insert into public.catalog(id,data) select 1,jsonb_build_object(
- 'companies',(select jsonb_agg(jsonb_build_object('id',gen_random_uuid(),'name',x,'active',true)) from unnest(array['אודיוטק','פטיפון מכשירי שמיעה','אודיו סאונד מכשירי שמיעה']) x),
- 'employees',(select jsonb_agg(jsonb_build_object('id',gen_random_uuid(),'name',x,'active',true)) from unnest(array['ירון גברי','אוריאל כהן','חן רוזנברג','זאב']) x),
+ 'companies',(select jsonb_agg(jsonb_build_object('id',gen_random_uuid(),'name',x,'active',true)) from unnest(array['חברה לדוגמה 1','חברה לדוגמה 2 מכשירי שמיעה','חברה לדוגמה 3 מכשירי שמיעה']) x),
+ 'employees',(select jsonb_agg(jsonb_build_object('id',gen_random_uuid(),'name',x,'active',true)) from unnest(array['עובד לדוגמה 1','עובד לדוגמה 2','עובד לדוגמה 3','עובד לדוגמה 4']) x),
  'models',(select jsonb_agg(jsonb_build_object('id',gen_random_uuid(),'name',x,'active',true)) from unnest(array['Reach R-Li','BiCore R-Li','BiCore SR','M-Core B-Li','M-Core iX']) x),
  'colors',(select jsonb_agg(jsonb_build_object('id',gen_random_uuid(),'name',x,'active',true)) from unnest(array['כסף','גרפיט','שמפניה']) x),'fields','[]'::jsonb);
 alter table public.profiles drop constraint if exists profiles_employee_check;

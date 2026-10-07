@@ -9,7 +9,7 @@ import {
 } from "../src/importer.js";
 import { defaultCatalog } from "../src/catalog.js";
 const book = new ExcelJS.Workbook();
-const sheet = book.addWorksheet("אודיוטק");
+const sheet = book.addWorksheet("חברה לדוגמה 1");
 sheet.addRow([
   "מספר סידורי",
   "דגם",
@@ -27,7 +27,7 @@ sheet.addRow([
   "ערך",
 ]);
 sheet.getCell("A2").numFmt = "000000";
-book.addWorksheet("פטיפון").addRow(["מספר סידורי", "דגם"]);
+book.addWorksheet("חברה לדוגמה 2").addRow(["מספר סידורי", "דגם"]);
 const buf = await book.xlsx.writeBuffer();
 const file = {
   name: "sample.xlsx",
@@ -42,19 +42,19 @@ const result = mapRows({
   sheet: sheets[0],
   headerRow: 0,
   mapping,
-  defaults: { company: "אודיוטק" },
+  defaults: { company: "חברה לדוגמה 1" },
   existing: [],
 });
 assert.equal(result.errors.length, 0);
 assert.equal(result.items[0].side, "ימין");
 assert.equal(result.items[0].received, "2026-10-05");
-assert.equal(result.items[0].attributes["sheet:אודיוטק:6"], "ערך");
+assert.equal(result.items[0].attributes["sheet:חברה לדוגמה 1:6"], "ערך");
 assert.equal(result.items[0].source.values["6:פרמטר נוסף"], "ערך");
 const data = { devices: [], events: [], catalog: defaultCatalog() };
 const staged = stageImport(
   data,
   result.items,
-  "אודיוטק",
+  "חברה לדוגמה 1",
   sheets[0].rows[0],
   mapping,
 );
@@ -66,7 +66,7 @@ const duplicates = mapRows({
   sheet: { ...sheets[0], rows: [...sheets[0].rows, sheets[0].rows[1]] },
   headerRow: 0,
   mapping,
-  defaults: { company: "אודיוטק" },
+  defaults: { company: "חברה לדוגמה 1" },
   existing: [],
 });
 assert.equal(duplicates.errors.length, 1);

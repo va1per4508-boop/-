@@ -4,7 +4,7 @@ import fs from "node:fs";
 import assert from "node:assert/strict";
 fs.mkdirSync("work", { recursive: true });
 const wb = new ExcelJS.Workbook();
-const s = wb.addWorksheet("אודיו סאונד רקסטון");
+const s = wb.addWorksheet("חברה לדוגמה 3 רקסטון");
 s.addRow([
   "צבע מכשיר",
   "דגם",
@@ -50,7 +50,7 @@ p.on("pageerror", (e) => errors.push(e.message));
 await p.goto(process.env.TEST_URL || "http://localhost:5175");
 await p.locator("nav").getByRole("button", { name: "ייבוא מגיליון" }).click();
 await p.getByLabel("בחירת קובץ מלאי").setInputFiles("work/legacy-sample.xlsx");
-await p.getByLabel("תיקון תאריך אודיו סאונד רקסטון שורה 2").fill("2026-06-30");
+await p.getByLabel("תיקון תאריך חברה לדוגמה 3 רקסטון שורה 2").fill("2026-06-30");
 await p.getByText("0 שגיאות", { exact: false }).waitFor();
 await p.getByRole("checkbox").nth(0).check();
 await p.getByRole("checkbox").nth(1).check();
@@ -62,16 +62,16 @@ await p.locator("nav").getByRole("button", { name: "רשומות מהגיליו�
 assert.equal(await p.locator("tbody tr").count(), 2);
 await p
   .getByRole("button", {
-    name: "עריכת רשומה legacy:אודיו סאונד רקסטון:2",
+    name: "עריכת רשומה legacy:חברה לדוגמה 3 רקסטון:2",
     exact: true,
   })
   .click();
-await p.getByLabel("עובד ברשומה").selectOption("ירון גברי");
+await p.getByLabel("עובד ברשומה").selectOption("עובד לדוגמה 1");
 await p.getByLabel("סיבת שינוי רשומה").fill("שיוך עובד לפי בדיקה");
 await p.getByRole("button", { name: "שמירת רשומה", exact: true }).click();
 await p.getByRole("dialog").waitFor({ state: "hidden" });
 assert.equal(
-  await p.locator("tbody").getByText("ירון גברי", { exact: true }).count(),
+  await p.locator("tbody").getByText("עובד לדוגמה 1", { exact: true }).count(),
   1,
 );
 await p.screenshot({ path: "work/legacy-screen.png", fullPage: true });
