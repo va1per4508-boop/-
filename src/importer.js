@@ -79,8 +79,10 @@ export async function readWorkbook(file) {
           let v = c.value;
           if (v instanceof Date) v = v.toISOString().slice(0, 10);
           else if (v && typeof v === "object") {
-            if (v.formula) v = v.result ?? "";
-            else if (v.richText) v = v.richText.map((r) => r.text).join("");
+            if (v.formula || v.sharedFormula) {
+              v = v.result ?? "";
+              if (v && typeof v === "object" && v.error) v = "";
+            } else if (v.richText) v = v.richText.map((r) => r.text).join("");
             else v = c.text;
           }
           if (typeof v === "number" && /^0+$/.test(c.numFmt || ""))

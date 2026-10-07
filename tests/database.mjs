@@ -7,6 +7,7 @@ await db.exec(
 );
 await db.exec(fs.readFileSync("database/schema.sql", "utf8"));
 await db.exec(fs.readFileSync("database/002-admin-import.sql", "utf8"));
+await db.exec(fs.readFileSync("database/003-legacy-records.sql", "utf8"));
 const admin = "11111111-1111-4111-8111-111111111111",
   a = "22222222-2222-4222-8222-222222222222",
   b = "33333333-3333-4333-8333-333333333333",
@@ -289,5 +290,82 @@ assert.equal(
 );
 console.log(
   "PASS: dynamic catalogue CRUD, cascading model/employee renames preserve RLS, admin-only editing/import, custom attributes and source preservation, optional unknown dates, atomic rollback on duplicate imports",
+);
+
+const legacyRow = {
+  id: crypto.randomUUID(),
+  sourceKey: "legacy:sample:2",
+  kind: "device-order",
+  model: "LEGACY MODEL",
+  company: "אודיוטק",
+  employee: "",
+  client: "לקוח דוגמה",
+  quantity: 2,
+  delivery: "delivered",
+  orderDate: "2026-06-30",
+  source: {
+    sheet: "sample",
+    row: 2,
+    values: { date: "31.06.26" },
+    dateCorrection: { original: "31.06.26", corrected: "2026-06-30" },
+  },
+};
+cfg = (await db.query("select * from catalog")).rows[0];
+await db.query("select import_legacy_records($1,$2)", [
+  JSON.stringify([legacyRow]),
+  cfg.version,
+]);
+assert.equal(
+  (await db.query("select * from legacy_records")).rows[0].data.quantity,
+  2,
+);
+cfg = (await db.query("select * from catalog")).rows[0];
+await fail(
+  () =>
+    db.query("select import_legacy_records($1,$2)", [
+      JSON.stringify([{ ...legacyRow, id: crypto.randomUUID() }]),
+      cfg.version,
+    ]),
+  /כבר יובאה/,
+);
+await as(b);
+assert.equal((await db.query("select * from legacy_records")).rows.length, 0);
+await fail(
+  () =>
+    db.query("select import_legacy_records($1,$2)", [
+      JSON.stringify([legacyRow]),
+      cfg.version,
+    ]),
+  /רק מנהל/,
+);
+await as(admin);
+await db.query("select edit_legacy_record($1,$2,$3,$4)", [
+  legacyRow.id,
+  1,
+  JSON.stringify({
+    employee: "אוריאל כהן",
+    sourceKey: "forged",
+    source: { bad: true },
+  }),
+  "שיוך עובד",
+]);
+await as(b);
+const legacyVisible = (await db.query("select * from legacy_records")).rows[0];
+assert.equal(legacyVisible.data.sourceKey, legacyRow.sourceKey);
+assert.deepEqual(legacyVisible.data.source, legacyRow.source);
+await as(admin);
+const oldModel = cfg.data.models.find((m) => m.name === "LEGACY MODEL");
+await db.query("select manage_catalog($1,$2,$3,$4)", [
+  "models",
+  "edit",
+  JSON.stringify({ ...oldModel, name: "LEGACY RENAMED" }),
+  cfg.version,
+]);
+assert.equal(
+  (await db.query("select * from legacy_records")).rows[0].data.model,
+  "LEGACY RENAMED",
+);
+console.log(
+  "PASS: historical quantity records retain original source/corrections; protected import/edit, employee isolation, source immutability, duplicate rejection and catalogue cascades",
 );
 await db.close();

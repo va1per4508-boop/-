@@ -42,3 +42,11 @@ The import screen accepts XLSX with multiple worksheet tabs or CSV. The administ
 The user's private Google Sheets source was not readable through the provided link (Google returned HTTP 401), and no authenticated Drive tool was available. No source data or inferred assignments were imported. Once access is granted, map and reconcile the source counts before writing to a configured, authenticated shared backend. Never embed real inventory or customer records into deployment source or this public repository.
 
 Additional checks: `npm run test:admin` exercises management, custom fields, barcode lookup/reception and sample CSV imports; `npm run test:import` checks multi-sheet XLSX parsing, leading-zero serials, Hebrew headers, original data retention and date validation. The Code128 camera path was tested through a virtual camera containing a genuine generated barcode; real-device camera permissions and scanning conditions should be checked on the employee phones.
+
+## Historical order sheets
+
+Apply `database/003-legacy-records.sql` after the first two migrations. The application recognises legacy company worksheets containing order quantities and no serial column. It preserves each order row with quantity, model, client, company, payment, original amount, city, notes, order date and all original source columns. Formula-only template rows are skipped; rows without models are retained separately for accessory/charge/cancellation review. These rows are not counted as serialised warehouse stock. No serials or employees are fabricated. Invalid dates require explicit corrections and retain the original source value. A repeated sheet/row is rejected or skipped when unchanged.
+
+Historical rows have administrator-only writes and employee-scoped reads after explicit assignment. Catalogue renames cascade to historical rows with audit records. Test with `npm run test:legacy` and `npm run test:legacy-ui`.
+
+The uploaded real workbook was parsed and validated in a private local workspace. It is intentionally excluded from this public repository and from deployment source. The live site still has no shared database connection, so the real records have not been written to the deployed application.

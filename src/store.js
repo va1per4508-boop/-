@@ -36,10 +36,11 @@ async function fetchAll(table, columns, order) {
   return rows;
 }
 export async function fetchRemote() {
-  const [devices, events, catalog] = await Promise.all([
+  const [devices, events, catalog, legacy] = await Promise.all([
     fetchAll("devices", "id,data,version", "id"),
     fetchAll("events", "data", "created_at"),
     backend.from("catalog").select("data,version").eq("id", 1).single(),
+    fetchAll("legacy_records", "id,data,version", "id"),
   ]);
   if (catalog.error) throw catalog.error;
   return {
@@ -47,6 +48,7 @@ export async function fetchRemote() {
     events: events.map((x) => x.data),
     catalog: catalog.data.data,
     catalogVersion: catalog.data.version,
+    legacy: legacy.map((x) => ({ ...x.data, id: x.id, version: x.version })),
   };
 }
 export async function addRemote(items) {
@@ -116,6 +118,25 @@ export async function importRemote(items, catalog, version, source) {
     next_catalog: catalog,
     expected_catalog_version: version,
     source_info: source,
+  });
+  if (error) throw error;
+  return fetchRemote();
+}
+
+export async function importLegacyRemote(items, version) {
+  const { error } = await backend.rpc("import_legacy_records", {
+    items,
+    expected_catalog_version: version,
+  });
+  if (error) throw error;
+  return fetchRemote();
+}
+export async function editLegacyRemote(record, reason) {
+  const { error } = await backend.rpc("edit_legacy_record", {
+    record_id: record.id,
+    expected_version: record.version,
+    changes: record,
+    reason,
   });
   if (error) throw error;
   return fetchRemote();

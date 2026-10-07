@@ -10,7 +10,9 @@
     "test:database": "node tests/database.mjs",
     "test:ui": "node tests/ui.mjs",
     "test:admin": "node tests/admin-ui.mjs",
-    "test:import": "node tests/importer.mjs"
+    "test:import": "node tests/importer.mjs",
+    "test:legacy": "node tests/legacy.mjs",
+    "test:legacy-ui": "node tests/legacy-ui.mjs"
   },
   "keywords": [],
   "author": "",

@@ -9,12 +9,15 @@ import {
 } from "./importer";
 import { useCatalog, normalizeCatalog } from "./catalog";
 import { statuses } from "./data";
+import { isLegacyWorkbook } from "./legacy.js";
+import { LegacyPreview } from "./Legacy";
 export default function ImportConsole({
   data,
   busy,
   onImport,
   error,
   production,
+  onLegacyImport,
 }) {
   const { companies } = useCatalog();
   const [book, setBook] = useState([]),
@@ -76,6 +79,7 @@ export default function ImportConsole({
           .map((x) => x.name),
       )
     : [];
+  const legacyMode = isLegacyWorkbook(book);
   return (
     <section className="panel import-panel">
       <div className="panel-head">
@@ -103,7 +107,7 @@ export default function ImportConsole({
           </div>
         </div>
         {loading && <p role="status">קורא את הקובץ…</p>}
-        {sheet && (
+        {sheet && !legacyMode && (
           <>
             <div className="form-grid">
               <label className="field">
@@ -336,6 +340,19 @@ export default function ImportConsole({
               </div>
             )}
           </>
+        )}
+        {legacyMode && (
+          <LegacyPreview
+            book={book}
+            companies={companies}
+            existing={data.legacy || []}
+            production={production}
+            busy={busy}
+            onImport={async (records) => {
+              await onLegacyImport(records);
+              setBook([]);
+            }}
+          />
         )}
         {(localError || error) && (
           <div className="error" role="alert">

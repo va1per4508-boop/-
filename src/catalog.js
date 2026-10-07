@@ -50,6 +50,7 @@ export function changeCatalog(data, kind, operation, item) {
     )
   )
     throw new Error("השם כבר קיים ברשימה");
+  let legacy = data.legacy || [];
   let devices = data.devices,
     profiles = data.profiles;
   let archived = false;
@@ -66,14 +67,18 @@ export function changeCatalog(data, kind, operation, item) {
       x.id === item.id ? { ...x, name, active: item.active !== false } : x,
     );
     if (property[kind] && old.name !== name)
-      devices = devices.map((d) =>
+      legacy = legacy.map((d) =>
         d[property[kind]] === old.name ? { ...d, [property[kind]]: name } : d,
       );
+    devices = devices.map((d) =>
+      d[property[kind]] === old.name ? { ...d, [property[kind]]: name } : d,
+    );
   } else if (operation === "remove") {
     const inUse =
       kind === "fields"
         ? devices.some((d) => d.attributes?.[old.key])
-        : devices.some((d) => d[property[kind]] === old.name);
+        : devices.some((d) => d[property[kind]] === old.name) ||
+          legacy.some((d) => d[property[kind]] === old.name);
     if (inUse) {
       old.active = false;
       archived = true;

@@ -45,6 +45,8 @@ import {
   editRemote,
   catalogRemote,
   importRemote,
+  importLegacyRemote,
+  editLegacyRemote,
 } from "./store";
 import {
   CatalogContext,
@@ -58,6 +60,7 @@ import {
 import Scanner from "./Scanner";
 import { AdminSettings, EditDevice } from "./Admin";
 import ImportConsole from "./ImportConsole";
+import { LegacyRecords } from "./Legacy";
 import "./style.css";
 const nav = [
   ["overview", "תמונת מצב", LayoutDashboard],
@@ -68,6 +71,7 @@ const nav = [
   ["returns", "החזרות ותיקונים", RotateCcw],
   ["history", "יומן תנועות", History],
   ["import", "ייבוא מגיליון", FileUp],
+  ["legacy", "רשומות מהגיליון", History],
   ["settings", "ניהול ועריכה", Settings],
 ];
 const fmt = (d) =>
@@ -436,6 +440,8 @@ function App() {
                         "כל קליטה, העברה ומסירה נשמרות בהיסטוריית המכשיר.",
                       settings:
                         "ניהול דגמים, חברות, עובדים ופרמטרים — בהרשאת מנהל.",
+                      legacy:
+                        "היסטוריית הזמנות ומסירות עם הנתונים המקוריים מהגיליון.",
                       import:
                         "העברת המלאי הקיים עם כל הפרטים והשיוכים מהגיליון.",
                     }[page]
@@ -873,6 +879,54 @@ function App() {
                 busy={busy}
                 error={error}
                 production={!!backend}
+                onLegacyImport={async (records) => {
+                  setBusy(true);
+                  try {
+                    if (backend)
+                      persist(
+                        await importLegacyRemote(records, data.catalogVersion),
+                      );
+                    else {
+                      const seen = new Set(
+                        (data.legacy || []).map((r) => r.sourceKey),
+                      );
+                      if (records.some((r) => seen.has(r.sourceKey)))
+                        throw new Error("רשומה כבר קיימת");
+                      const catalog = structuredClone(normalizeCatalog(data));
+                      for (const r of records)
+                        if (
+                          r.model &&
+                          !catalog.models.some((m) => m.name === r.model)
+                        )
+                          catalog.models.push({
+                            id: crypto.randomUUID(),
+                            name: r.model,
+                            active: true,
+                          });
+                      persist({
+                        ...data,
+                        catalog,
+                        legacy: [...(data.legacy || []), ...records],
+                        events: [
+                          {
+                            id: crypto.randomUUID(),
+                            type: "ייבוא רשומות מהגיליון",
+                            at: new Date().toISOString(),
+                            actor: "מנהל הדגמה",
+                            detail: `${records.length} רשומות`,
+                          },
+                          ...data.events,
+                        ],
+                      });
+                    }
+                    setToast(`${records.length} רשומות יובאו`);
+                  } catch (e) {
+                    setError(e.message);
+                    throw e;
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
                 onImport={async (items, nextCatalog, source) => {
                   setBusy(true);
                   setError("");
@@ -921,6 +975,53 @@ function App() {
                     setBusy(false);
                   }
                 }}
+              />
+            )}
+            {page === "legacy" && (
+              <LegacyRecords
+                records={data.legacy || []}
+                companies={companies}
+                employees={employees}
+                busy={busy}
+                error={error}
+                onEdit={
+                  admin
+                    ? async (record, reason) => {
+                        setBusy(true);
+                        setError("");
+                        try {
+                          if (!reason.trim())
+                            throw new Error("חסרה סיבת שינוי");
+                          if (backend)
+                            persist(await editLegacyRemote(record, reason));
+                          else
+                            persist({
+                              ...data,
+                              legacy: data.legacy.map((r) =>
+                                r.id === record.id ? record : r,
+                              ),
+                              events: [
+                                {
+                                  id: crypto.randomUUID(),
+                                  type: "עריכת רשומה מהגיליון",
+                                  recordId: record.id,
+                                  at: new Date().toISOString(),
+                                  actor: "מנהל הדגמה",
+                                  detail: reason,
+                                },
+                                ...data.events,
+                              ],
+                            });
+                          setToast("הרשומה נשמרה");
+                        } catch (e) {
+                          setError(e.message);
+                          throw e;
+                        } finally {
+                          setBusy(false);
+                        }
+                      }
+                    : null
+                }
               />
             )}
             {page === "team" && (
