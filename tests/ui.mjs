@@ -1,0 +1,21 @@
+import {chromium} from '@playwright/test';
+import fs from 'node:fs';
+fs.mkdirSync('work',{recursive:true});
+import assert from 'node:assert/strict';
+const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+const page=await browser.newPage({viewport:{width:1440,height:1080}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
+await page.goto(process.env.TEST_URL||'http://localhost:5173');await page.getByRole('heading',{name:'תמונת מצב',exact:true}).waitFor();
+await page.screenshot({path:'work/dashboard.png',fullPage:true});
+await page.locator('nav').getByRole('button',{name:'קליטת מלאי'}).click();
+await page.getByLabel('מספר משלוח / תעודת משלוח').fill('QA-001');await page.getByLabel('מספרים סידוריים').fill('QA-100\nQA-101');
+await page.getByRole('button',{name:'קליטת 2 מכשירים למחסן'}).click();await page.getByRole('status').filter({hasText:'2 מכשירים נקלטו'}).waitFor();
+await page.getByRole('button',{name:'פתיחת מכשיר QA-100',exact:true}).click();
+await page.getByRole('button',{name:'העברה לעובד',exact:true}).click();await page.getByLabel('חברה *',{exact:true}).selectOption('אודיוטק');await page.getByLabel('עובד אחראי *').selectOption('ירון גברי');await page.getByRole('button',{name:'אישור ושמירה'}).click();await page.getByRole('dialog').waitFor({state:'hidden'});
+await page.getByRole('button',{name:'פתיחת מכשיר QA-100',exact:true}).click();await page.getByRole('button',{name:'מסירה לניסיון',exact:true}).click();await page.getByLabel('שם הלקוח').fill('לקוח בדיקה');await page.getByLabel('תאריך סיום ניסיון').fill('2026-12-20');await page.getByRole('button',{name:'אישור ושמירה'}).click();await page.getByRole('dialog').waitFor({state:'hidden'});
+await page.getByRole('button',{name:'פתיחת מכשיר QA-100',exact:true}).click();await page.getByRole('button',{name:'מסירה ללקוח',exact:true}).click();await page.getByRole('button',{name:'אישור ושמירה'}).click();await page.getByRole('dialog').waitFor({state:'hidden'});
+await page.getByRole('button',{name:'פתיחת מכשיר QA-100',exact:true}).click();await page.getByRole('button',{name:'החזרה לבדיקה',exact:true}).click();await page.getByLabel('סיבת ההחזרה').fill('בדיקת תהליך ההחזרה');await page.getByRole('button',{name:'אישור ושמירה'}).click();await page.getByRole('dialog').waitFor({state:'hidden'});
+await page.getByRole('button',{name:'פתיחת מכשיר QA-100',exact:true}).click();await page.getByRole('button',{name:'אישור חזרה למחסן'}).click();await page.getByRole('checkbox').check();await page.getByRole('button',{name:'אישור ושמירה'}).click();await page.getByRole('dialog').waitFor({state:'hidden'});
+await page.reload();await page.getByRole('heading',{name:'תמונת מצב',exact:true}).waitFor();await page.locator('nav').getByRole('button',{name:'כל המכשירים'}).click();await page.getByLabel('חיפוש מכשירים').fill('QA-100');assert.equal(await page.locator('tbody tr').count(),1);await page.getByRole('button',{name:'פתיחת מכשיר QA-100',exact:true}).click();assert.equal(await page.getByRole('dialog').getByText('במחסן',{exact:true}).count(),1);assert.equal(await page.getByRole('dialog').getByText('החזרה לבדיקה',{exact:true}).count(),1);await page.keyboard.press('Escape');await page.getByRole('dialog').waitFor({state:'hidden'});
+await page.locator('nav').getByRole('button',{name:'קליטת מלאי'}).click();await page.getByLabel('מספר משלוח / תעודת משלוח').fill('QA-002');await page.getByLabel('מספרים סידוריים').fill('qa-100');await page.getByRole('button',{name:'קליטת 1 מכשירים למחסן'}).click();await page.getByRole('alert').filter({hasText:'מספר סידורי כבר קיים'}).waitFor();
+for(const n of ['מלאי עובדים','חברות','החזרות ותיקונים','יומן תנועות']){await page.locator('nav').getByRole('button',{name:n}).click();await page.getByRole('heading',{name:n,exact:true}).waitFor()}
+await page.setViewportSize({width:390,height:844});await page.getByRole('button',{name:'פתיחת תפריט'}).click();await page.locator('nav').getByRole('button',{name:'תמונת מצב'}).click();await page.screenshot({path:'work/mobile.png',fullPage:true});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));assert.deepEqual(errors,[]);console.log('PASS: reception, assignment, trial, delivery, return, inspected restock, history, reload persistence, duplicate rejection, all views, mobile overflow, no runtime errors');await browser.close();
