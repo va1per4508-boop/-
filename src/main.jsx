@@ -107,7 +107,8 @@ function App() {
     [busy, setBusy] = useState(false),
     [mobile, setMobile] = useState(false),
     [scanner, setScanner] = useState(null),
-    [passwordDone, setPasswordDone] = useState(false);
+    [passwordDone, setPasswordDone] = useState(false),
+    [inventoryView, setInventoryView] = useState(null);
   useEffect(() => {
     if (!backend) {
       try {
@@ -217,6 +218,7 @@ function App() {
   }
   function navigate(p, filters = {}) {
     setPage(p);
+    setInventoryView(filters.status ? "serial" : null);
     setSearch("");
     setStatus(filters.status || "");
     setEmployee(filters.employee || "");
@@ -238,6 +240,10 @@ function App() {
     );
   const catalog = normalizeCatalog(data);
   const { companies, employees } = catalogLists(catalog, true);
+  const sheetOrders = (data.legacy || []).filter(r => r.kind === "device-order");
+  const units = rows => rows.reduce((n,r) => n + (Number(r.quantity)||0),0);
+  const sheetUnits = units(sheetOrders);
+  const currentInventoryView = inventoryView || (sheetOrders.length ? "sheet" : "serial");
   const active = data.devices.filter((d) => d.status !== "supplier");
   const counts = Object.fromEntries(
     Object.keys(statuses).map((s) => [
@@ -442,7 +448,7 @@ function App() {
                   {
                     {
                       overview: "כל מכשיר, בכל שלב. תמונה אחת של המלאי שלך.",
-                      inventory: "איתור ומעקב אחר כל מכשיר לפי מספר סידורי.",
+                      inventory: "כל נתוני המכשירים: רשומות החברה מהגיליון ומעקב לפי מספר סידורי.",
                       receive: "קליטת משלוח מהספק אל המחסן המשותף.",
                       team: "העובדים שלך — מלאי משותף ומעקב אישי.",
                       companies:
@@ -525,7 +531,12 @@ function App() {
             {page === "overview" && (
               <>
                 <section className="metrics">
-                  {[
+                  {(sheetOrders.length ? [
+                    [sheetUnits,"מכשירים בגיליון","לפי הכמויות בקובץ החברה",Package,"sheet"],
+                    [units(sheetOrders.filter(r=>r.delivery==="delivered")),"נמסרו לפי הגיליון","כמות מכשירים שסומנו כנמסרו",ClipboardCheck,"sheet"],
+                    [units(sheetOrders.filter(r=>r.delivery==="pending")),"ממתינים למסירה","לפי הסטטוס שנרשם בקובץ",Users,"sheet"],
+                    [active.length,"מעקב לפי מספר סידורי","מכשירים שנרשמו בנפרד במערכת",Box,"serial"],
+                  ] : [
                     [
                       active.length,
                       "מכשירים במערכת",
@@ -554,13 +565,14 @@ function App() {
                       ClipboardCheck,
                       "trial",
                     ],
-                  ].map(([n, label, sub, Icon, s], i) => (
+                  ]).map(([n, label, sub, Icon, s], i) => (
                     <button
-                      key={s}
+                      key={label}
                       className={"metric " + (i === 0 ? "main-metric" : "")}
-                      onClick={() =>
-                        navigate("inventory", { status: s === "all" ? "" : s })
-                      }
+                      onClick={() => {
+                        navigate("inventory", {status:["sheet","serial","all"].includes(s)?"":s});
+                        if(["sheet","serial"].includes(s))setInventoryView(s);
+                      }}
                     >
                       <span className="metric-top">
                         {label}
@@ -595,6 +607,7 @@ function App() {
                     <div className="distribution-rows">
                       {companies.map((c, i) => {
                         const ds = active.filter((d) => d.company === c);
+                        const companyOrders = sheetOrders.filter(r=>r.company===c);
                         return (
                           <button
                             className="company-row"
@@ -609,9 +622,10 @@ function App() {
                             <div className="company-data">
                               <div>
                                 <b>{shortCompany(c)}</b>
-                                <span>{ds.length} מכשירים</span>
+                                <span>{companyOrders.length ? units(companyOrders) : ds.length} מכשירים</span>
                               </div>
-                              <div className="segmented">
+                              {companyOrders.length > 0 && <small>{units(companyOrders.filter(r=>r.delivery==="delivered"))} נמסרו · {units(companyOrders.filter(r=>r.delivery==="pending"))} ממתינים למסירה</small>}
+                              <div className="segmented" hidden={companyOrders.length > 0}>
                                 {[
                                   "warehouse",
                                   "agent",
@@ -769,7 +783,11 @@ function App() {
                 </div>
               </>
             )}
-            {["inventory", "returns"].includes(page) && (
+            {page === "inventory" && <div className="inventory-switch" role="group" aria-label="סוג מעקב מלאי">
+              <button className={currentInventoryView==="sheet"?"primary":"secondary"} aria-pressed={currentInventoryView==="sheet"} onClick={()=>setInventoryView("sheet")}>מכשירים מהגיליון · {sheetUnits}</button>
+              <button className={currentInventoryView==="serial"?"primary":"secondary"} aria-pressed={currentInventoryView==="serial"} onClick={()=>setInventoryView("serial")}>לפי מספר סידורי · {active.length}</button>
+            </div>}
+            {(page === "returns" || (page === "inventory" && currentInventoryView === "serial")) && (
               <section className="panel inventory-panel">
                 <div className="panel-head">
                   <h2>
@@ -990,8 +1008,10 @@ function App() {
                 }}
               />
             )}
-            {page === "legacy" && (
+            {(page === "legacy" || (page === "inventory" && currentInventoryView === "sheet")) && (
               <LegacyRecords
+                key={page+company}
+                initialCompany={company}
                 records={data.legacy || []}
                 companies={companies}
                 employees={employees}
@@ -1118,6 +1138,7 @@ function App() {
               <div className="company-grid">
                 {companies.map((c, i) => {
                   const ds = active.filter((d) => d.company === c);
+                  const companyOrders = sheetOrders.filter(r=>r.company===c);
                   return (
                     <section className="panel company-card" key={c}>
                       <span className={"company-logo large color-" + i}>
@@ -1125,10 +1146,15 @@ function App() {
                       </span>
                       <h2>{c}</h2>
                       <strong>
-                        {ds.length}
-                        <small>מכשירים משויכים</small>
+                        {companyOrders.length ? units(companyOrders) : ds.length}
+                        <small>{companyOrders.length ? "מכשירים בגיליון" : "מכשירים משויכים"}</small>
                       </strong>
                       <div className="company-stat-list">
+                        {companyOrders.length > 0 && <>
+                          <div><span>נמסרו לפי הגיליון</span><b>{units(companyOrders.filter(r=>r.delivery==="delivered"))}</b></div>
+                          <div><span>ממתינים למסירה</span><b>{units(companyOrders.filter(r=>r.delivery==="pending"))}</b></div>
+                          <div><span>רשומות הזמנה</span><b>{companyOrders.length}</b></div>
+                        </>}
                         {[
                           "warehouse",
                           "agent",

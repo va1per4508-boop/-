@@ -2424,3 +2424,5 @@ td .source-details b {
   max-width: 150px;
   overflow-wrap: anywhere;
 }
+
+.inventory-switch{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}.company-data small{display:block;margin-top:6px;color:var(--muted)}.segmented[hidden]{display:none}

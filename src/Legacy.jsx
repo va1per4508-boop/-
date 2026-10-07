@@ -161,6 +161,7 @@ export function LegacyPreview({
 }
 export function LegacyRecords({
   records = [],
+  initialCompany = "",
   companies,
   employees,
   onEdit,
@@ -168,7 +169,7 @@ export function LegacyRecords({
   error,
 }) {
   const [search, setSearch] = useState(""),
-    [company, setCompany] = useState(""),
+    [company, setCompany] = useState(initialCompany),
     [edit, setEdit] = useState(null),
     [reason, setReason] = useState("");
   useEffect(() => {
@@ -215,10 +216,10 @@ export function LegacyRecords({
       <div className="panel-head">
         <div>
           <h2>
-            רשומות מהגיליון <span className="count">{records.length}</span>
+            מכשירים ורשומות החברה <span className="count">{records.length}</span>
           </h2>
           <p>
-            היסטוריית הזמנות ומסירות. מלאי המחסן מנוהל בנפרד לפי מספר סידורי.
+            נתוני הקובץ לפי חברה, לקוח, דגם וכמות. כולל הזמנות, מסירות ורשומות נוספות.
           </p>
         </div>
         <FileSpreadsheet size={23} />

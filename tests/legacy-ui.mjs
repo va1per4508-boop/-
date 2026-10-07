@@ -78,6 +78,16 @@ await p.screenshot({ path: "work/legacy-screen.png", fullPage: true });
 await p.reload();
 await p.locator("nav").getByRole("button", { name: "רשומות מהגיליון" }).click();
 assert.equal(await p.locator("tbody tr").count(), 2);
+await p.locator("nav").getByRole("button", { name: "תמונת מצב", exact: true }).click();
+assert.match(await p.locator(".metric").first().innerText(), /2/);
+await p.locator("nav").getByRole("button", {name:"כל המכשירים",exact:true}).click();
+assert.equal(await p.locator("tbody tr").count(),2);
+await p.getByRole("button",{name:/^לפי מספר סידורי ·/}).click();
+assert.equal(await p.locator("tbody tr").count(),36);
+await p.getByRole("button",{name:"מכשירים מהגיליון · 2",exact:true}).click();
+assert.equal(await p.locator("tbody tr").count(),2);
+await p.locator("nav").getByRole("button",{name:"חברות",exact:true}).click();
+assert.match(await p.locator(".company-card").filter({hasText:"חברה לדוגמה 3"}).innerText(),/2/);
 assert.deepEqual(errors, []);
 await b.close();
 console.log(
