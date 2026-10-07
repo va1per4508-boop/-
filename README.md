@@ -28,3 +28,17 @@ Models in the demo are examples, not a verified supplier catalogue; reception al
 ## Verification
 
 `npm run test:database` checks role isolation, forbidden writes, unique serials, stale version rejection, and the full inventory lifecycle against embedded PostgreSQL. `npm run test:ui` runs browser checks against the dev server (install Chromium with `npx playwright install chromium` first). Set TEST_URL to check another deployment.
+
+## Administrator management and barcode scanning
+
+The administrator area manages models, companies, employees, colours and custom device fields. Renames cascade to current device assignments; employee renames also preserve authenticated scope by updating profile employee bindings. Items in use are archived instead of deleted. Administrators may edit device details, status and assignments with a required reason and before/after audit snapshots. Status identifiers remain the defined workflow states.
+
+Apply `database/002-admin-import.sql` **after** `database/schema.sql` before enabling the updated app's shared backend. Migrations contain configuration only; no real inventory is committed. New employee catalogue entries do not automatically create authentication accounts.
+
+Barcode scanning supports a mobile camera using ZXing (Code 128, EAN and other supported formats), USB keyboard scanners and manual entry. Use the main scan button for device lookup or the reception scan button to append a serial number. The scanner stops the camera on completion, close or cancellation. A separate barcode may be associated with a serial-numbered device through administrator editing. Browser camera access requires HTTPS and permission; granting camera access is controlled by the browser.
+
+The import screen accepts XLSX with multiple worksheet tabs or CSV. The administrator selects a worksheet/header row, maps known fields, chooses explicit defaults, previews assignments and confirms any new catalogue values. Unmapped columns become custom fields; the original source row is retained. Missing reception dates stay blank. Duplicate serials, contradictory assignments, invalid dates and unresolved statuses block import. Each confirmed import is atomic and limited to 1,000 devices. Repeated worksheets must be imported separately with the appropriate defaults. Demo imports require an acknowledgement that the file contains only sample data.
+
+The user's private Google Sheets source was not readable through the provided link (Google returned HTTP 401), and no authenticated Drive tool was available. No source data or inferred assignments were imported. Once access is granted, map and reconcile the source counts before writing to a configured, authenticated shared backend. Never embed real inventory or customer records into deployment source or this public repository.
+
+Additional checks: `npm run test:admin` exercises management, custom fields, barcode lookup/reception and sample CSV imports; `npm run test:import` checks multi-sheet XLSX parsing, leading-zero serials, Hebrew headers, original data retention and date validation. The Code128 camera path was tested through a virtual camera containing a genuine generated barcode; real-device camera permissions and scanning conditions should be checked on the employee phones.

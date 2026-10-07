@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
     "test:database": "node tests/database.mjs",
-    "test:ui": "node tests/ui.mjs"
+    "test:ui": "node tests/ui.mjs",
+    "test:admin": "node tests/admin-ui.mjs",
+    "test:import": "node tests/importer.mjs"
   },
   "keywords": [],
   "author": "",
@@ -16,7 +18,10 @@
   "type": "module",
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
+    "@zxing/browser": "^0.2.1",
+    "exceljs": "^4.4.0",
     "lucide-react": "^1.52.0",
+    "papaparse": "^5.7.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },
@@ -24,6 +29,8 @@
     "@electric-sql/pglite": "^0.5.8",
     "@playwright/test": "^1.63.0",
     "@vitejs/plugin-react": "^6.1.2",
+    "bwip-js": "^4.11.4",
+    "prettier": "^3.9.9",
     "vite": "^8.3.3"
   }
 }

@@ -1,8 +1,149 @@
-export const companies=['אודיוטק','פטיפון מכשירי שמיעה','אודיו סאונד מכשירי שמיעה'];
-export const employees=['ירון גברי','אוריאל כהן','חן רוזנברג','זאב'];
-export const statuses={warehouse:'במחסן',agent:'אצל עובד',trial:'בניסיון',delivered:'נמסר ללקוח',inspection:'בבדיקה',repair:'בתיקון',supplier:'הוחזר לספק'};
-export const models=['Reach R-Li','BiCore R-Li','BiCore SR','M-Core B-Li','M-Core iX'];
-export const actions={assign:'העברה לעובד',deliver:'מסירה ללקוח',trial:'מסירה לניסיון',return:'החזרה לבדיקה',approve:'אישור חזרה למחסן',repair:'שליחה לתיקון',supplier:'החזרה לספק',reassign:'העברה בין עובדים'};
-export function allowed(d){return ({warehouse:['assign','repair','supplier'],agent:['deliver','trial','return','reassign'],trial:['deliver','return'],delivered:['return'],inspection:['approve','repair','supplier'],repair:['return','supplier'],supplier:[]})[d.status]||[];}
-export function seed(){const devices=Array.from({length:36},(_,i)=>{let status=i<15?'warehouse':i<25?'agent':i<29?'trial':i<33?'delivered':i<35?'inspection':'repair';return {id:crypto.randomUUID(),serial:`RX-${260100+i}`,model:models[i%5],side:i%2?'שמאל':'ימין',color:['כסף','גרפיט','שמפניה'][i%3],company:i<7?'':companies[i%3],employee:['agent','trial','delivered'].includes(status)?employees[i%4]:'',client:['trial','delivered'].includes(status)?`לקוח לדוגמה ${i-24}`:'',status,received:'2026-10-01',trialUntil:status==='trial'?'2026-10-18':'',batch:'RX-2026-104',notes:''};});const events=devices.map(d=>({id:crypto.randomUUID(),deviceId:d.id,serial:d.serial,type:'קליטה מהספק',at:'2026-10-01T08:00:00Z',actor:'מנהל מערכת',detail:`${d.model} · משלוח ${d.batch}`}));return {devices,events};}
-export function transition(d,type,v){if(!allowed(d).includes(type))throw new Error('הפעולה אינה אפשרית במצב הנוכחי. רעננו את הרשימה.');const n={...d,notes:v.notes||d.notes};if(['assign','reassign'].includes(type)){if(!v.employee||!v.company)throw new Error('יש לבחור חברה ועובד');Object.assign(n,{status:'agent',employee:v.employee,company:v.company,client:'',trialUntil:''});}if(['deliver','trial'].includes(type)){if(!v.client?.trim())throw new Error('יש להזין שם לקוח');Object.assign(n,{status:type==='trial'?'trial':'delivered',client:v.client.trim(),trialUntil:type==='trial'?v.trialUntil:''});if(type==='trial'&&!v.trialUntil)throw new Error('יש לבחור תאריך סיום ניסיון');}if(type==='return'){if(!v.reason?.trim())throw new Error('יש להזין סיבת החזרה');Object.assign(n,{status:'inspection',employee:'',client:'',trialUntil:'',notes:v.reason});}if(type==='approve'){if(!v.checked)throw new Error('יש לאשר בדיקת תקינות');Object.assign(n,{status:'warehouse',employee:'',client:'',trialUntil:''});}if(type==='repair')Object.assign(n,{status:'repair',employee:'',client:'',trialUntil:''});if(type==='supplier')Object.assign(n,{status:'supplier',employee:'',client:'',trialUntil:''});return n;}
+export const companies = [
+  "אודיוטק",
+  "פטיפון מכשירי שמיעה",
+  "אודיו סאונד מכשירי שמיעה",
+];
+export const employees = ["ירון גברי", "אוריאל כהן", "חן רוזנברג", "זאב"];
+export const statuses = {
+  warehouse: "במחסן",
+  agent: "אצל עובד",
+  trial: "בניסיון",
+  delivered: "נמסר ללקוח",
+  inspection: "בבדיקה",
+  repair: "בתיקון",
+  supplier: "הוחזר לספק",
+};
+export const models = [
+  "Reach R-Li",
+  "BiCore R-Li",
+  "BiCore SR",
+  "M-Core B-Li",
+  "M-Core iX",
+];
+export const actions = {
+  assign: "העברה לעובד",
+  deliver: "מסירה ללקוח",
+  trial: "מסירה לניסיון",
+  return: "החזרה לבדיקה",
+  approve: "אישור חזרה למחסן",
+  repair: "שליחה לתיקון",
+  supplier: "החזרה לספק",
+  reassign: "העברה בין עובדים",
+};
+export function allowed(d) {
+  return (
+    {
+      warehouse: ["assign", "repair", "supplier"],
+      agent: ["deliver", "trial", "return", "reassign"],
+      trial: ["deliver", "return"],
+      delivered: ["return"],
+      inspection: ["approve", "repair", "supplier"],
+      repair: ["return", "supplier"],
+      supplier: [],
+    }[d.status] || []
+  );
+}
+export function seed() {
+  const devices = Array.from({ length: 36 }, (_, i) => {
+    let status =
+      i < 15
+        ? "warehouse"
+        : i < 25
+          ? "agent"
+          : i < 29
+            ? "trial"
+            : i < 33
+              ? "delivered"
+              : i < 35
+                ? "inspection"
+                : "repair";
+    return {
+      id: crypto.randomUUID(),
+      serial: `RX-${260100 + i}`,
+      model: models[i % 5],
+      side: i % 2 ? "שמאל" : "ימין",
+      color: ["כסף", "גרפיט", "שמפניה"][i % 3],
+      company: i < 7 ? "" : companies[i % 3],
+      employee: ["agent", "trial", "delivered"].includes(status)
+        ? employees[i % 4]
+        : "",
+      client: ["trial", "delivered"].includes(status)
+        ? `לקוח לדוגמה ${i - 24}`
+        : "",
+      status,
+      received: "2026-10-01",
+      trialUntil: status === "trial" ? "2026-10-18" : "",
+      batch: "RX-2026-104",
+      notes: "",
+    };
+  });
+  const events = devices.map((d) => ({
+    id: crypto.randomUUID(),
+    deviceId: d.id,
+    serial: d.serial,
+    type: "קליטה מהספק",
+    at: "2026-10-01T08:00:00Z",
+    actor: "מנהל מערכת",
+    detail: `${d.model} · משלוח ${d.batch}`,
+  }));
+  return { devices, events };
+}
+export function transition(d, type, v) {
+  if (!allowed(d).includes(type))
+    throw new Error("הפעולה אינה אפשרית במצב הנוכחי. רעננו את הרשימה.");
+  const n = { ...d, notes: v.notes || d.notes };
+  if (["assign", "reassign"].includes(type)) {
+    if (!v.employee || !v.company) throw new Error("יש לבחור חברה ועובד");
+    Object.assign(n, {
+      status: "agent",
+      employee: v.employee,
+      company: v.company,
+      client: "",
+      trialUntil: "",
+    });
+  }
+  if (["deliver", "trial"].includes(type)) {
+    if (!v.client?.trim()) throw new Error("יש להזין שם לקוח");
+    Object.assign(n, {
+      status: type === "trial" ? "trial" : "delivered",
+      client: v.client.trim(),
+      trialUntil: type === "trial" ? v.trialUntil : "",
+    });
+    if (type === "trial" && !v.trialUntil)
+      throw new Error("יש לבחור תאריך סיום ניסיון");
+  }
+  if (type === "return") {
+    if (!v.reason?.trim()) throw new Error("יש להזין סיבת החזרה");
+    Object.assign(n, {
+      status: "inspection",
+      employee: "",
+      client: "",
+      trialUntil: "",
+      notes: v.reason,
+    });
+  }
+  if (type === "approve") {
+    if (!v.checked) throw new Error("יש לאשר בדיקת תקינות");
+    Object.assign(n, {
+      status: "warehouse",
+      employee: "",
+      client: "",
+      trialUntil: "",
+    });
+  }
+  if (type === "repair")
+    Object.assign(n, {
+      status: "repair",
+      employee: "",
+      client: "",
+      trialUntil: "",
+    });
+  if (type === "supplier")
+    Object.assign(n, {
+      status: "supplier",
+      employee: "",
+      client: "",
+      trialUntil: "",
+    });
+  return n;
+}

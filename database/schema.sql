@@ -65,7 +65,7 @@ begin
  if p.id is null then raise exception 'אין הרשאה'; end if;
  select * into current_device from public.devices where id=device_id for update;
  if not found then raise exception 'המכשיר לא נמצא'; end if;
- if current_device.version<>expected_version then raise exception 'המכשיר עודכן בידי משתמש אחר. רעננו ונסו שוב'; end if;
+ if current_device.version is distinct from expected_version then raise exception 'המכשיר עודכן בידי משתמש אחר. רעננו ונסו שוב'; end if;
  if p.role<>'admin' and (current_device.data->>'employee' is distinct from p.employee or action not in ('deliver','trial','return')) then raise exception 'אין הרשאה לפעולה'; end if;
  s:=current_device.data->>'status'; next_data:=current_device.data;
  if not (
